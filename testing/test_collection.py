@@ -941,8 +941,9 @@ def test_fixture_scope_sibling_conftests(testdir):
 
 
 def test_collect_init_tests(testdir):
-    """Check that we collect files from __init__.py files when they patch the 'python_files' (#3773)"""
+    """Check that we collect files from __init__.py files when they patch the 'python_files' (#3773, #4046)"""
     p = testdir.copy_example("collect/collect_init_tests")
+
     result = testdir.runpytest(p, "--collect-only")
     result.stdout.fnmatch_lines(
         [
@@ -952,3 +953,22 @@ def test_collect_init_tests(testdir):
             "*<Function 'test_foo'>",
         ]
     )
+
+    result = testdir.runpytest(p.join("tests"), "--collect-only")
+    result.stdout.fnmatch_lines(
+        [
+            "*<Module '__init__.py'>",
+            "*<Function 'test_init'>",
+            "*<Module 'test_foo.py'>",
+            "*<Function 'test_foo'>",
+        ]
+    )
+
+    result = testdir.runpytest(p.join("tests/__init__.py"), "--collect-only")
+    result.stdout.fnmatch_lines(
+        [
+            "*<Module '__init__.py'>",
+            "*<Function 'test_init'>",
+        ]
+    )
+    assert 'test_foo' not in result.stdout.str()
